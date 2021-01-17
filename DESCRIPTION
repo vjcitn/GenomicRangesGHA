@@ -14,7 +14,7 @@ biocViews: Genetics, Infrastructure, DataRepresentation, Sequencing,
 	Annotation, GenomeAnnotation, Coverage
 URL: https://github.com/vjcitn/GenomicRangesGHA
 BugReports: https://github.com/vjcitn/GenomicRangesGHA/issues
-Version: 1.42.0-2
+Version: 1.42.0-3
 License: Artistic-2.0
 Encoding: UTF-8
 Author: P. Aboyoun, H. Pagès, and M. Lawrence
