@@ -1,6 +1,6 @@
 ---
 title: "2. GenomicRanges HOWTOs"
-author: "Vincent J. Carey, stvjc at channing.harvard.edu"
+author: "Bioconductor team"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 vignette: >
   %\VignetteEngine{knitr::rmarkdown}
@@ -9,20 +9,16 @@ vignette: >
   %\VignetteDepends{GenomicRangesGHA, Rsamtools, GenomicAlignments, pasillaBamSubset, TxDb.Dmelanogaster.UCSC.dm3.ensGene, TxDb.Athaliana.BioMart.plantsmart22, AnnotationHub, DESeq2, edgeR, TxDb.Hsapiens.UCSC.hg19.knownGene, GenomicFeatures, Biostrings, BSgenome.Hsapiens.UCSC.hg19, KEGG.db, KEGGgraph, BSgenome.Scerevisiae.UCSC.sacCer2}
   %\VignetteKeywords{sequence, sequencing, alignments}
 output:
-  BiocStyle::pdf_document:
+  pdf_document:
     toc: yes
     number_sections: yes
-  BiocStyle::html_document:
+  html_document:
     highlight: pygments
     number_sections: yes
     theme: united
     toc: yes
 ---
 
-
-```{r style, echo=FALSE, results="hide">>=
-BiocStyle::latex(use.unsrturl=FALSE)
-```
 
 
 ```{r options, echo=FALSE}
@@ -38,10 +34,10 @@ BiocStyle::latex(use.unsrturl=FALSE)
 
 This document is a collection of {\it HOWTOs}. Each {\it HOWTO} is
 a short section that demonstrates how to use the containers and
-operations implemented in the \Biocpkg{GenomicRangesGHA} and related
-packages (\Biocpkg{IRanges}, \Biocpkg{Biostrings}, \Biocpkg{Rsamtools},
-\Biocpkg{GenomicAlignments}, \Biocpkg{BSgenome}, and
-\Biocpkg{GenomicFeatures}) to perform a task typically found in the context
+operations implemented in the {GenomicRangesGHA} and related
+packages ({IRanges}, {Biostrings}, {Rsamtools},
+{GenomicAlignments}, {BSgenome}, and
+{GenomicFeatures}) to perform a task typically found in the context
 of a high throughput sequence analysis.
 
 Unless stated otherwise, the {\it HOWTOs} are self contained, independent
@@ -49,20 +45,20 @@ of each other, and can be studied and reproduced in any order.
 
 \subsection{Prerequisites and additional recommended reading}
 
-We assume the reader has some previous experience with \R{} and
-with basic manipulation of \Rcode{GRanges}, \Rcode{GRangesList}, \Rcode{Rle},
-\Rcode{RleList}, and \Rcode{DataFrame} objects. See the ``An Introduction
-to Genomic Ranges Classes'' vignette located in the \Biocpkg{GenomicRangesGHA}
+We assume the reader has some previous experience with R{} and
+with basic manipulation of {GRanges}, {GRangesList}, {Rle},
+{RleList}, and {DataFrame} objects. See the ``An Introduction
+to Genomic Ranges Classes'' vignette located in the {GenomicRangesGHA}
 package (in the same folder as this document) for an introduction to these
 containers.
 
 Additional recommended readings after this document are the ``Software for
 Computing and Annotating Genomic Ranges'' paper[\citet{Lawrence2013ranges}]
-and the ``Counting reads with \Rfunction{summarizeOverlaps}'' vignette
-located in the \Biocpkg{GenomicAlignments} package.
+and the ``Counting reads with {summarizeOverlaps}'' vignette
+located in the {GenomicAlignments} package.
 
-To display the list of vignettes available in the \Biocpkg{GenomicRangesGHA}
-package, use \Rcode{browseVignettes("GenomicRangesGHA")}.
+To display the list of vignettes available in the {GenomicRangesGHA}
+package, use {browseVignettes("GenomicRangesGHA")}.
 
 \subsection{Input data and terminology used across the HOWTOs}
 
@@ -70,34 +66,29 @@ In order to avoid repetition, input data, concepts and terms used in more
 than one {\it HOWTO} are described here:
 
 \begin{itemize}
-  \item {\bf The \Biocpkg{pasillaBamSubset} data package}: contains both a BAM
+  \item {\bf The {pasillaBamSubset} data package}: contains both a BAM
         file with single-end reads (untreated1\_chr4) and a BAM file with
         paired-end reads (untreated3\_chr4). Each file is a subset of chr4
         from the "Pasilla" experiment.
+
+        See {?pasillaBamSubset} for more information.
+
+  \item {\bf Gene models and {TxDb} objects}: A \textit{gene model}
+        is essentially a set of annotations that describes the genomic
+        locations of the known genes, transcripts, exons, and CDS, for a
+        given organism. In Bioconductor{} it is typically represented as
+        a {TxDb} object but also sometimes as a {GRanges}
+        or {GRangesList} object.
+        The {GenomicFeatures} package contains tools for making and
+        manipulating {TxDb} objects.
+\end{itemize}
+
 
 ```{r pasillaBamSubset}
 library(pasillaBamSubset)
 untreated1_chr4()
 untreated3_chr4()
 ```
-
-        See \Rcode{?pasillaBamSubset} for more information.
-
-```{r pasillaBamSubset_help, eval=FALSE}
-?pasillaBamSubset
-```
-
-  \item {\bf Gene models and \Rclass{TxDb} objects}: A \textit{gene model}
-        is essentially a set of annotations that describes the genomic
-        locations of the known genes, transcripts, exons, and CDS, for a
-        given organism. In \Bioconductor{} it is typically represented as
-        a \Rclass{TxDb} object but also sometimes as a \Rclass{GRanges}
-        or \Rclass{GRangesList} object.
-        The \Biocpkg{GenomicFeatures} package contains tools for making and
-        manipulating \Rclass{TxDb} objects.
-\end{itemize}
-
-
 
 
 \section{HOWTOs}
@@ -106,7 +97,7 @@ untreated3_chr4()
 
 \subsection{How to read single-end reads from a BAM file}
 
-As sample data we use the \Biocpkg{pasillaBamSubset} data package
+As sample data we use the {pasillaBamSubset} data package
 described in the introduction.
 
 ```{r readGAlignments_1, results="hide"}
@@ -114,7 +105,7 @@ library(pasillaBamSubset)
 un1 <- untreated1_chr4()  # single-end reads
 ```
 
-Several functions are available for reading BAM files into \R{}:
+Several functions are available for reading BAM files into R:
 
 \begin{verbatim}
   readGAlignments()
@@ -123,12 +114,12 @@ Several functions are available for reading BAM files into \R{}:
   scanBam()
 \end{verbatim}
 
-\Rfunction{scanBam} is a low-level function that returns a list of lists
-and is not discussed further here. See \Rcode{?scanBam} in the
-\Biocpkg{Rsamtools} package for more information.
+{scanBam} is a low-level function that returns a list of lists
+and is not discussed further here. See {?scanBam} in the
+{Rsamtools} package for more information.
 
-Single-end reads can be loaded with the \Rfunction{readGAlignments} function
-from the \Biocpkg{GenomicAlignments} package.
+Single-end reads can be loaded with the {readGAlignments} function
+from the {GenomicAlignments} package.
 
 ```{r readGAlignments_2}
 library(GenomicAlignments)
@@ -136,9 +127,9 @@ gal <- readGAlignments(un1)
 ```
 
 Data subsets can be specified by genomic position, field names, or flag
-criteria in the \Rcode{ScanBamParam}. Here we input records that overlap 
-position 1 to 5000 on the negative strand with \Rcode{flag} and 
-\Rcode{cigar} as metadata columns.
+criteria in the {ScanBamParam}. Here we input records that overlap 
+position 1 to 5000 on the negative strand with {flag} and 
+{cigar} as metadata columns.
  
 ```{r readGAlignments_3}
 what <- c("flag", "cigar") 
@@ -149,16 +140,16 @@ neg <- readGAlignments(un1, param=param)
 neg
 ```
 
-Another approach to subsetting the data is to use \Rfunction{filterBam}.
+Another approach to subsetting the data is to use {filterBam}.
 This function creates a new BAM file of records passing user-defined 
-criteria. See \Rcode{?filterBam} in the \Biocpkg{Rsamtools} package for
+criteria. See {?filterBam} in the {Rsamtools} package for
 more information.
 
 
 
 \subsection{How to read paired-end reads from a BAM file}
 
-As sample data we use the \Biocpkg{pasillaBamSubset} data package
+As sample data we use the {pasillaBamSubset} data package
 described in the introduction.
 
 ```{r readGAlignmentPairs_1}
@@ -166,42 +157,42 @@ library(pasillaBamSubset)
 un3 <- untreated3_chr4()  # paired-end reads
 ```
 
-Paired-end reads can be loaded with the \Rfunction{readGAlignmentPairs}
-or \Rfunction{readGAlignmentsList} function from the
-\Biocpkg{GenomicAlignments} package. These functions use the same
+Paired-end reads can be loaded with the {readGAlignmentPairs}
+or {readGAlignmentsList} function from the
+{GenomicAlignments} package. These functions use the same
 mate paring algorithm but output different objects.
 
-Let's start with \Rfunction{readGAlignmentPairs}:
+Let's start with {readGAlignmentPairs}:
 
 ```{r readGAlignmentPairs_2}
 un3 <- untreated3_chr4()
 gapairs <- readGAlignmentPairs(un3)
 ```
 
-The \Robject{GAlignmentPairs} class holds only pairs; reads with no
+The {GAlignmentPairs} class holds only pairs; reads with no
 mate or with ambiguous pairing are discarded.
 Each list element holds exactly 2 records (a mated pair). Records
-can be accessed as the \Rcode{first} and\Rcode{last} segments in
-a template or as \Rcode{left} and \Rcode{right} alignments.
-See \Rcode{?GAlignmentPairs} in the \Biocpkg{GenomicAlignments} package
+can be accessed as the {first} and{last} segments in
+a template or as {left} and {right} alignments.
+See {?GAlignmentPairs} in the {GenomicAlignments} package
 for more information.
 
 ```{r readGAlignmentPairs_3}
 gapairs
 ``` 
 
-For \Rcode{readGAlignmentsList}, mate pairing is performed when \Rcode{asMates}
-is set to \Rcode{TRUE} on the \Rcode{BamFile} object, otherwise records are
+For {readGAlignmentsList}, mate pairing is performed when {asMates}
+is set to {TRUE} on the {BamFile} object, otherwise records are
 treated as single-end. 
 
 ```{r readGAlignmentsList_1}
 galist <- readGAlignmentsList(BamFile(un3, asMates=TRUE))
 ```
 
-\Robject{GAlignmentsList} is a more general `list-like' structure
+{GAlignmentsList} is a more general `list-like' structure
 that holds mate pairs as well as non-mates (i.e., singletons, records 
-with unmapped mates etc.) A \Rcode{mates\_status} metadata column (accessed
-with \Rfunction{mcols}) indicates which records were paired.
+with unmapped mates etc.) A {mates\_status} metadata column (accessed
+with {mcols}) indicates which records were paired.
 
 ```{r readGAlignmentsList_2}
 galist
@@ -221,8 +212,8 @@ table(elementNROWS(non_mates))
             reduce memory usage}
 
 A large BAM file can be iterated through in chunks by setting a
-\Rcode{yieldSize} on the \Rclass{BamFile} object.
-As sample data we use the \Biocpkg{pasillaBamSubset} data package
+{yieldSize} on the {BamFile} object.
+As sample data we use the {pasillaBamSubset} data package
 described in the introduction.
 
 ```{r yieldSize}
@@ -233,7 +224,7 @@ bf <- BamFile(un1, yieldSize=100000)
 
 Iteration through a BAM file requires that the file be opened, repeatedly
 queried inside a loop, then closed. Repeated calls to 
-\Rfunction{readGAlignments} without opening the file first result
+{readGAlignments} without opening the file first result
 in the same 100000 records returned each time.
 
 ```{r readGAlignments_by_chunk}
@@ -261,9 +252,9 @@ cvg
 The ``read coverage'' is the number of reads that cover a given genomic
 position. Computing the read coverage generally consists in computing
 the coverage at each position in the genome. This can be done with the
-\Rcode{coverage()} function.
+{coverage()} function.
 
-As sample data we use the \Biocpkg{pasillaBamSubset} data package
+As sample data we use the {pasillaBamSubset} data package
 described in the introduction.
 
 ```{r coverage_1}
@@ -288,8 +279,8 @@ mean(cvg1$chr4)
 max(cvg1$chr4)
 ```
 
-Note that \Rcode{coverage()} is a generic function with methods for
-different types of objects. See \Rcode{?coverage} for more information.
+Note that {coverage()} is a generic function with methods for
+different types of objects. See {?coverage} for more information.
 
 
 
@@ -298,15 +289,15 @@ different types of objects. See \Rcode{?coverage} for more information.
 ChIP-Seq analysis usually involves finding peaks in read coverage.
 This process is sometimes called ``peak calling'' or ``peak detection''.
 Here we're only showing a naive way to find peaks in the object returned
-by the \Rcode{coverage()} function. \Bioconductor{} packages
-\Biocpkg{BayesPeak}, \Biocpkg{bumphunter}, \Biocpkg{Starr}, \Biocpkg{CexoR},
-\Biocpkg{exomePeak}, \Biocpkg{RIPSeeker}, and others, provide sophisticated
+by the {coverage()} function. Bioconductor{} packages
+{BayesPeak}, {bumphunter}, {Starr}, {CexoR},
+{exomePeak}, {RIPSeeker}, and others, provide sophisticated
 peak calling tools for ChIP-Seq, RIP-Seq, and other kind of high throughput
 sequencing data.
 
-Let's assume \Rcode{cvg1} is the object returned by \Rcode{coverage()}
+Let's assume {cvg1} is the object returned by {coverage()}
 (see previous {\it HOWTO} for how to compute it). We can use the
-\Rcode{slice()} function to find the genomic regions where the coverage
+{slice()} function to find the genomic regions where the coverage
 is greater or equal to a given threshold.
 
 ```{r peaks_1}
@@ -317,7 +308,7 @@ length(chr4_peaks)  # nb of peaks
 
 The weight of a given peak can be defined as the number of aligned
 nucleotides that belong to the peak (a.k.a. the area under the peak in
-mathematics). It can be obtained with \Rcode{sum()}:
+mathematics). It can be obtained with {sum()}:
 
 ```{r peaks_2}
 sum(chr4_peaks)
@@ -328,10 +319,10 @@ sum(chr4_peaks)
 \subsection{How to retrieve a gene model from the UCSC genome browser}
 
 See introduction for a quick description of what \textit{gene models} and
-\Rclass{TxDb} objects are.
-We can use the \Rcode{make\-Transcript\-Db\-From\-UCSC()} function from
-the \Biocpkg{GenomicFeatures} package to import a UCSC genome browser
-track as a \Rclass{TxDb} object.
+{TxDb} objects are.
+We can use the {make\-Transcript\-Db\-From\-UCSC()} function from
+the {GenomicFeatures} package to import a UCSC genome browser
+track as a {TxDb} object.
 
 ```{r makeTxDbFromUCSC_1, eval=FALSE}
 library(GenomicFeatures)
@@ -339,11 +330,11 @@ library(GenomicFeatures)
 txdb <- makeTxDbFromUCSC(genome="sacCer2", tablename="ensGene")
 ```
 
-See \Rcode{?makeTxDbFromUCSC} in the \Biocpkg{GenomicFeatures}
+See {?makeTxDbFromUCSC} in the {GenomicFeatures}
 package for more information.
 
 Note that some of the most frequently used gene models are available
-as TxDb packages. A TxDb package consists of a pre-made \Rclass{TxDb}
+as TxDb packages. A TxDb package consists of a pre-made {TxDb}
 object wrapped into an annotation data package. Go to
 \url{http://bioconductor.org/packages/release/BiocViews.html#\_\_\_TxDb}
 to browse the list of available TxDb packages.
@@ -366,9 +357,9 @@ transcripts(txdb)
 \subsection{How to retrieve a gene model from Ensembl}
 
 See introduction for a quick description of what \textit{gene models} and
-\Rclass{TxDb} objects are.
-We can use the \Rcode{make\-Transcript\-Db\-From\-Biomart()} function from
-the \Biocpkg{GenomicFeatures} package to retrieve a gene model from the
+{TxDb} objects are.
+We can use the {make\-Transcript\-Db\-From\-Biomart()} function from
+the {GenomicFeatures} package to retrieve a gene model from the
 Ensembl Mart.
 
 ```{r makeTxDbFromBiomart_1, eval=FALSE}
@@ -378,11 +369,11 @@ txdb <- makeTxDbFromBiomart(biomart="ensembl",
                             dataset="hsapiens_gene_ensembl")
 ```
 
-See \Rcode{?makeTxDbFromBiomart} in the \Biocpkg{GenomicFeatures}
+See {?makeTxDbFromBiomart} in the {GenomicFeatures}
 package for more information.
 
 Note that some of the most frequently used gene models are available
-as TxDb packages. A TxDb package consists of a pre-made \Rclass{TxDb}
+as TxDb packages. A TxDb package consists of a pre-made {TxDb}
 object wrapped into an annotation data package. Go to
 \url{http://bioconductor.org/packages/release/BiocViews.html#\_\_\_TxDb}
 to browse the list of available TxDb packages.
@@ -406,10 +397,10 @@ exons(txdb)
 \subsection{How to load a gene model from a GFF or GTF file}
 
 See introduction for a quick description of what \textit{gene models} and
-\Rclass{TxDb} objects are.
-We can use the \Rcode{make\-Transcript\-Db\-From\-GFF()} function from
-the \Biocpkg{GenomicFeatures} package to import a GFF or GTF file as a
-\Rclass{TxDb} object.
+{TxDb} objects are.
+We can use the {make\-Transcript\-Db\-From\-GFF()} function from
+the {GenomicFeatures} package to import a GFF or GTF file as a
+{TxDb} object.
 
 ```{r makeTxDbFromGFF_1}
 library(GenomicFeatures)
@@ -419,7 +410,7 @@ txdb <- makeTxDbFromGFF(gff_file, format="gff3")
 txdb
 ```
 
-See \Rcode{?makeTxDbFromGFF} in the \Biocpkg{GenomicFeatures}
+See {?makeTxDbFromGFF} in the {GenomicFeatures}
 package for more information.
 
 Extract the exon coordinates grouped by gene from this gene model:
@@ -432,13 +423,13 @@ exonsBy(txdb, by="gene")
 
 
 
-\subsection{How to retrieve a gene model from \Biocpkg{AnnotationHub}}
+\subsection{How to retrieve a gene model from {AnnotationHub}}
 
-When a gene model is not available as a \Rclass{GRanges} or
-\Rclass{GRangesList} object or as a \Bioconductor{} data package, it may
-be available on \Biocpkg{AnnotationHub}.
+When a gene model is not available as a {GRanges} or
+{GRangesList} object or as a Bioconductor{} data package, it may
+be available on {AnnotationHub}.
 In this {\it HOWTO}, will look for a gene model for Drosophila melanogaster
-on \Biocpkg{AnnotationHub}.
+on {AnnotationHub}.
 Create a `hub' and then filter on Drosophila melanogaster:
 
 ```{r hub_1}
@@ -461,7 +452,7 @@ head(hub$title, n=10)
 hub[7]
 ```
 
-So you can retrieve that dm3 file as a \Rcode{GRanges} like this:
+So you can retrieve that dm3 file as a {GRanges} like this:
 
 ```{r hub_3}
 gr <- hub[[names(hub)[7]]]
@@ -474,20 +465,20 @@ The metadata fields contain the details of file origin and content.
 metadata(gr)
 ```
 
-Split the \Rclass{GRanges} object by gene name to get a \Rclass{GRangesList}
+Split the {GRanges} object by gene name to get a {GRangesList}
 object of transcript ranges grouped by gene.
 
 ```{r hub_5} 
 txbygn <- split(gr, gr$name)
 ```
 
-You can now use \Rcode{txbygn} with the \Rcode{summarizeOverlaps} function
+You can now use {txbygn} with the {summarizeOverlaps} function
 to prepare a table of read counts for RNA-Seq differential gene expression.
 
-Note that before passing \Rcode{txbygn} to \Rcode{summarizeOverlaps},
+Note that before passing {txbygn} to {summarizeOverlaps},
 you should confirm that the seqlevels (chromosome names) in it match those
-in the BAM file. See \Rcode{?renameSeqlevels}, \Rcode{?keepSeqlevels}
-and \Rcode{?seqlevels} for examples of renaming seqlevels.
+in the BAM file. See {?renameSeqlevels}, {?keepSeqlevels}
+and {?seqlevels} for examples of renaming seqlevels.
 
  
 
@@ -507,15 +498,15 @@ and \Rcode{?seqlevels} for examples of renaming seqlevels.
 Methods for RNA-Seq gene expression analysis generally require a table of
 counts that summarize the number of reads that overlap or `hit' a 
 particular gene. In this {\it HOWTO} we count with the
-\Rcode{summarizeOverlaps} function from the \Biocpkg{GenomicAlignments}
+{summarizeOverlaps} function from the {GenomicAlignments}
 package and create a count table from the results. 
 
-Other packages that provide read counting are \Biocpkg{Rsubread} and 
-\Biocpkg{easyRNASeq}. The \Biocpkg{parathyroidSE} package vignette 
+Other packages that provide read counting are {Rsubread} and 
+{easyRNASeq}. The {parathyroidSE} package vignette 
 contains a workflow on counting and other common operations required for 
 differential expression analysis. 
 
-As sample data we use the \Biocpkg{pasillaBamSubset} data package
+As sample data we use the {pasillaBamSubset} data package
 described in the introduction.
 
 ```{r count_1}
@@ -524,12 +515,12 @@ reads <- c(untrt1=untreated1_chr4(),  # single-end reads
            untrt3=untreated3_chr4())  # paired-end reads
 ```
 
-\Rcode{summarizeOverlaps} requires the name of a BAM file(s) and a
+{summarizeOverlaps} requires the name of a BAM file(s) and a
 {\textit gene model} to count against. See introduction for a quick
 description of what a \textit{gene models} is.
 The gene model must match the genome build the reads in the BAM file were
 aligned to. For the pasilla data this is dm3 Dmelanogaster which is
-available as a \Bioconductor{} package. Load the package and extract
+available as a Bioconductor{} package. Load the package and extract
 the exon ranges grouped by gene:
 
 ```{r count_2}
@@ -537,45 +528,45 @@ library(TxDb.Dmelanogaster.UCSC.dm3.ensGene)
 exbygene <- exonsBy(TxDb.Dmelanogaster.UCSC.dm3.ensGene, "gene")
 ```
 
-\Rcode{exbygene} is a \Rclass{GRangesList} object with one list
+{exbygene} is a {GRangesList} object with one list
 element per gene in the gene model.
 
-\Rcode{summarizeOverlaps} automatically sets a \Rcode{yieldSize}
+{summarizeOverlaps} automatically sets a {yieldSize}
 on large BAM files and iterates over them in chunks. When reading
-paired-end data set the \Rcode{singleEnd} argument to FALSE.
-See ?\Rfunction{summarizeOverlaps} for details reguarding the
-count \Rcode{modes} and additional arguments. 
+paired-end data set the {singleEnd} argument to FALSE.
+See ?{summarizeOverlaps} for details reguarding the
+count {modes} and additional arguments. 
 
 ```{r count_3}
 library(GenomicAlignments)
 se <- summarizeOverlaps(exbygene, reads, mode="IntersectionNotEmpty")
 ```
 
-The return object is a \Rcode{SummarizedExperiment} with counts
-accessible with the \Rcode{assays} accessor:
+The return object is a {SummarizedExperiment} with counts
+accessible with the {assays} accessor:
 
 ```{r count_4}
 class(se)
 head(table(assays(se)$counts))
 ```
 
-The count vector is the same length as \Rcode{exbygene}:
+The count vector is the same length as {exbygene}:
 
 ```{r count_5}
 identical(length(exbygene), length(assays(se)$counts))
 ```
 
-A copy of \Rcode{exbygene} is stored in the \Rcode{se} object and
-accessible with \Rcode{rowRanges} accessor:
+A copy of {exbygene} is stored in the {se} object and
+accessible with {rowRanges} accessor:
 
 ```{r count_6}
 rowRanges(se)
 ```
 
 Two popular packages for RNA-Seq differential gene expression are
-\Biocpkg{DESeq2} and \Biocpkg{edgeR}. Tables of counts per gene are required
+{DESeq2} and {edgeR}. Tables of counts per gene are required
 for both and can be easily created with a vector of counts. Here we use the
-counts from our \Rclass{SummarizedExperiment} object:
+counts from our {SummarizedExperiment} object:
 
 ```{r count_table}
 colData(se)$trt <- factor(c("untrt", "untrt"), levels=c("trt", "untrt"))
@@ -593,7 +584,7 @@ edger <- DGEList(assays(se)$counts, group=rownames(colData(se)))
 \subsection{How to summarize junctions from a BAM file containing RNA-Seq
             reads}
 
-As sample data we use the \Biocpkg{pasillaBamSubset} data package
+As sample data we use the {pasillaBamSubset} data package
 described in the introduction.
 
 ```{r summarizeJunctions_1}
@@ -609,16 +600,16 @@ its "geometry", that is, the locations of insertions, deletions and
 junctions in the alignment. See the SAM Spec available on the SAMtools
 website for the details (\url{http://samtools.sourceforge.net/}).
 
-The \Rcode{summarizeJunctions()} function from the
-\Biocpkg{GenomicAlignments} package can be used to summarize the junctions
-in \Rcode{reads1}.
+The {summarizeJunctions()} function from the
+{GenomicAlignments} package can be used to summarize the junctions
+in {reads1}.
 
 ```{r summarizeJunctions_2}
 junc_summary <- summarizeJunctions(reads1)
 junc_summary
 ```
 
-See \Rcode{?summarizeJunctions} in the \Biocpkg{GenomicAlignments}
+See {?summarizeJunctions} in the {GenomicAlignments}
 package for more information.
 
 
@@ -636,7 +627,7 @@ The Entrez gene id is `66008'.
 trak2 <- "66008"
 ```
 
-The \Biocpkg{TxDb.Hsapiens.UCSC.hg19.knownGene} data package contains the
+The {TxDb.Hsapiens.UCSC.hg19.knownGene} data package contains the
 gene model corresponding to the UCSC `Known Genes' track.
 
 ```{r trak_2}
@@ -645,11 +636,11 @@ txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
 ```
 
 The transcript ranges for all the genes in the gene model can be extracted
-with the \Rfunction{transcriptsBy} function from the \Biocpkg{GenomicFeatures}
-package. They will be returned in a named \Rclass{GRangesList} object
+with the {transcriptsBy} function from the {GenomicFeatures}
+package. They will be returned in a named {GRangesList} object
 containing all the transcripts grouped by gene. In order to keep only the
-transcripts of the TRAK2 gene we will subset the \Rclass{GRangesList}
-object using the \Rcode{[[} operator.
+transcripts of the TRAK2 gene we will subset the {GRangesList}
+object using the {[[} operator.
 
 ```{r trak_3}
 library(GenomicFeatures)
@@ -657,9 +648,9 @@ trak2_txs <- transcriptsBy(txdb, by="gene")[[trak2]]
 trak2_txs
 ```
 
-\Rcode{trak2\_txs} is a \Rclass{GRanges} object with one range per
+{trak2\_txs} is a {GRanges} object with one range per
 transcript in the TRAK2 gene. The transcript names are stored in the 
-\Rcode{tx\_name} metadata column. We will need them to subset the
+{tx\_name} metadata column. We will need them to subset the
 extracted intron and exon regions:
 
 ```{r trak_4}
@@ -668,10 +659,10 @@ trak2_tx_names
 ```
 
 The exon and intron genomic ranges for all the transcripts in the gene model
-can be extracted with the \Rfunction{exonsBy} and
-\Rfunction{intronsByTranscript} functions, respectively. Both functions
-return a \Rclass{GRangesList} object. Then we keep only the exon and intron
-for the transcripts of the TRAK2 gene by subsetting each \Rclass{GRangesList}
+can be extracted with the {exonsBy} and
+{intronsByTranscript} functions, respectively. Both functions
+return a {GRangesList} object. Then we keep only the exon and intron
+for the transcripts of the TRAK2 gene by subsetting each {GRangesList}
 object by the TRAK2 transcript names.
 
 Extract the exon regions:
@@ -689,8 +680,8 @@ elementNROWS(trak2_inbytx)
 ```
 
 Next we want the DNA sequences for these exons and introns.
-The \Rfunction{getSeq} function from the \Biocpkg{Biostrings} package can
-be used to query a \Biocpkg{BSgenome} object with a set of genomic ranges
+The {getSeq} function from the {Biostrings} package can
+be used to query a {BSgenome} object with a set of genomic ranges
 and retrieve the corresponding DNA sequences. 
 
 ```{r trak_8}
@@ -728,8 +719,8 @@ disease-related genes.
 \subsubsection{Build a gene list}
 
 We start with a list of gene or transcript ids. If you do not have 
-pre-defined list one can be created with the \Biocpkg{KEGG.db} and 
-\Biocpkg{KEGGgraph} packages. Updates to the data in the \Biocpkg{KEGG.db} 
+pre-defined list one can be created with the {KEGG.db} and 
+{KEGGgraph} packages. Updates to the data in the {KEGG.db} 
 package are no longer available, however, the resource is still useful for 
 identifying pathway names and ids. 
 
@@ -751,7 +742,7 @@ retrieveKGML("05200", "hsa", dest, "internal")
 ```
 
 The suffix of the KEGG id is the Entrez gene id. The 
-\Rfunction{translateKEGGID2GeneID} simply removes the prefix leaving 
+{translateKEGGID2GeneID} simply removes the prefix leaving 
 just the Entrez gene ids.
 
 ```{r cancer_3}
@@ -764,17 +755,17 @@ head(crgenes)
 
 The list of gene ids is used to extract genomic positions of the regions 
 of interest. The Known Gene table from UCSC will be the annotation and
-is available as a \Bioconductor{} package.
+is available as a Bioconductor{} package.
 
 ```{r cancer_4}
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
 ```
 
-If an annotation is not available as a \Bioconductor{} annotation package
-it may be available in \Biocpkg{AnnotationHub}. Additionally, there are
-functions in \Biocpkg{GenomicFeatures} which can retrieve data from UCSC and
-Ensembl to create a \Robject{TxDb}. See \Rcode{?makeTxDbFromUCSC} for more
+If an annotation is not available as a Bioconductor{} annotation package
+it may be available in {AnnotationHub}. Additionally, there are
+functions in {GenomicFeatures} which can retrieve data from UCSC and
+Ensembl to create a {TxDb}. See {?makeTxDbFromUCSC} for more
 information.
 
 As in the previous {\it HOWTO} we need to identify the transcripts 
@@ -782,9 +773,9 @@ corresponding to each gene. The transcript id (or name) is used
 to isolate the UTR and coding regions of interest. This grouping of
 transcript by gene is also used to re-group the final sequence results.
 
-The \Rcode{transcriptsBy} function outputs both the gene and transcript
+The {transcriptsBy} function outputs both the gene and transcript
 identifiers which we use to create a map between the two. The 
-\Rcode{map} is a \Robject{CharacterList} with gene ids as names and 
+{map} is a {CharacterList} with gene ids as names and 
 transcript ids as the list elements.
 
 ```{r cancer_5}
@@ -802,7 +793,7 @@ fiveUTR <- fiveUTRsByTranscript(txdb)
 ```
 
 Coding and UTR regions may not be present for all transcripts specified 
-in \Rcode{map}. Consequently, the subset results will not be the same 
+in {map}. Consequently, the subset results will not be the same 
 length. This length discrepancy must be taken into account when re-listing 
 the final results by gene.
 
@@ -822,7 +813,7 @@ length(threeUTR)
 length(fiveUTR)
 ```
 
-These objects are \Robject{GRangesList}s with the transcript id as the 
+These objects are {GRangesList}s with the transcript id as the 
 outer list element. 
 
 ```{r cancer_9}
@@ -831,19 +822,19 @@ cds
 
 \subsubsection{Extract sequences from BSgenome}
 
-The \Rcode{BSgenome} packages contain complete genome sequences
+The {BSgenome} packages contain complete genome sequences
 for a given organism.
 
-Load the \Rcode{BSgenome} package for homo sapiens.
+Load the {BSgenome} package for homo sapiens.
 
 ```{r cancer_10}
 library(BSgenome.Hsapiens.UCSC.hg19)
 genome <- BSgenome.Hsapiens.UCSC.hg19
 ```
 
-Use \Rfunction{extractTranscriptSeqs} to extract the UTR and coding 
-regions from the \Rcode{BSgenome}. This function retrieves the sequences 
-for an any \Robject{GRanges} or \Robject{GRangesList} (i.e., not just 
+Use {extractTranscriptSeqs} to extract the UTR and coding 
+regions from the {BSgenome}. This function retrieves the sequences 
+for an any {GRanges} or {GRangesList} (i.e., not just 
 transcripts like the name implies).
 
 ```{r cancer_11}
@@ -852,19 +843,19 @@ fiveUTR_seqs <- extractTranscriptSeqs(genome, fiveUTR)
 cds_seqs <- extractTranscriptSeqs(genome, cds) 
 ```
 
-The return values are \Robject{DNAStringSet} objects.
+The return values are {DNAStringSet} objects.
 
 ```{r cancer_12}
 cds_seqs
 ```
 
 Our final step is to collect the coding and UTR regions (currently 
-organzied by transcript) into groups by gene id. The \Rfunction{relist} 
-function groups the sequences of a \Robject{DNAStringSet} object into
-a \Robject{DNAStringSetList} object, based on the specified \Rcode{skeleton}
-argument. The \Rcode{skeleton} must be a list-like object and only its shape
+organzied by transcript) into groups by gene id. The {relist} 
+function groups the sequences of a {DNAStringSet} object into
+a {DNAStringSetList} object, based on the specified {skeleton}
+argument. The {skeleton} must be a list-like object and only its shape
 (i.e. its element lengths) matters (its exact content is ignored). A simple
-form of \Rcode{skeleton} is to use a partitioning object that we make by
+form of {skeleton} is to use a partitioning object that we make by
 specifying the size of each partition. The partitioning objects are different
 for each type of region because not all transcripts had a coding or 3' or 5'
 UTR region defined. 
@@ -875,7 +866,7 @@ lst5 <- relist(fiveUTR_seqs, PartitioningByWidth(sum(map %in% names(fiveUTR))))
 lstc <- relist(cds_seqs, PartitioningByWidth(sum(map %in% names(cds))))
 ```
 
-There are 239 genes in \Rcode{map} each of which have 1 or more transcripts. 
+There are 239 genes in {map} each of which have 1 or more transcripts. 
 The table of element lengths shows how many genes have each number of
 transcripts. For example, 47 genes have 1 transcript, 48 genes have 2 etc.
 
@@ -884,7 +875,7 @@ length(map)
 table(elementNROWS(map))
 ```
 
-The lists of DNA sequences all have the same length as \Rcode{map} but one or
+The lists of DNA sequences all have the same length as {map} but one or
 more of the element lengths may be zero. This would indicate that data were
 not available for that gene. The tables below show that there was at least
 1 coding region available for all genes (i.e., none of the element lengths
@@ -931,7 +922,7 @@ library(GenomicAlignments)
 gal <- readGAlignments(bamfile, use.names=TRUE, param=param)
 ```
 
-Use the \Rfunction{sequenceLayer} function to {\it lay} the query sequences
+Use the {sequenceLayer} function to {\it lay} the query sequences
 and quality strings on the reference.
 
 ```{r cseq_2}
@@ -1107,7 +1098,7 @@ cs_by_chrom
 In some applications (e.g. visualization), there is the need to compute
 the average of a variable defined along a genome (a.k.a. genomic variable)
 for a set of predefined fixed-width regions (sometimes called "bins").
-The genomic variable is typically represented as a named \Robject{RleList}
+The genomic variable is typically represented as a named {RleList}
 object with one list element per chromosome. One such example is coverage.
 Here we create an artificial genomic variable:
 
@@ -1125,7 +1116,7 @@ my_var <- RleList(
 my_var
 ```
 
-Use the \Rfunction{tileGenome} function to create a set of bins along
+Use the {tileGenome} function to create a set of bins along
 the genome.
 
 ```{r bin_2}
@@ -1133,14 +1124,14 @@ bins <- tileGenome(seqinfo(Scerevisiae), tilewidth=100,
                    cut.last.tile.in.chrom=TRUE)
 ```
 
-Compute the binned average for \Rcode{my\_var}:
+Compute the binned average for {my\_var}:
 
 ```{r bin_3}
 binnedAverage(bins, my_var, "binned_var")
 ```
 
-The bin size can be modified with the \Rcode{tilewidth} argument
-to \Rfunction{tileGenome}. See \Rcode{?binnedAverage} for additional
+The bin size can be modified with the {tilewidth} argument
+to {tileGenome}. See {?binnedAverage} for additional
 examples.
 
 
